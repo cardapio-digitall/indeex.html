@@ -1,0 +1,94 @@
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.annotation.WebServlet;
+import java.io.IOException;
+import java.sql.*;
+
+@WebServlet("/RealistaArsenal")
+public class RealistaArsenal extends HttpServlet {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/realista_arsenal";
+    private static final String DB_USER = "your_username";
+    private static final String DB_PASS = "your_password";
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
+        // Header
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang='pt-BR'>");
+        out.println("<head>");
+        out.println("<meta charset='UTF-8'>");
+        out.println("<title>Realista Arsenal | Armas Airsoft & Realistas</title>");
+        out.println("<meta name='viewport' content='width=device-width, initial-scale=1'>");
+        out.println("<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>");
+        out.println("<style>");
+        // CSS styles would go here
+        out.println("</style>");
+        out.println("</head>");
+        out.println("<body>");
+
+        // Header
+        out.println("<header>Realista Arsenal</header>");
+
+        // Login form for admin
+        out.println("<div id='admin-login' style='display:none'>");
+        out.println("<form action='/login' method='post'>");
+        out.println("<input type='text' name='username' placeholder='Admin Username'>");
+        out.println("<input type='password' name='password' placeholder='Admin Password'>");
+        out.println("<button type='submit'>Login Admin</button>");
+        out.println("</form>");
+        out.println("</div>");
+
+        // Catalog rendering
+        out.println("<section class='grid' id='catalog'></section>");
+
+        // Cart sidebar
+        out.println("<aside id='cart'>");
+        out.println("<h4>Carrinho</h4>");
+        out.println("<ul id='clist'></ul>");
+        out.println("<div id='balance'>");
+        out.println("<label>Saldo CP</label>");
+        out.println("<input type='number' id='bal' value='50' step='0.01'>");
+        out.println("</div>");
+        out.println("<div id='total'>Total: <span id='tot'>0.00</span> CP</div>");
+        out.println("<button class='btn' onclick='checkout()'><i class='fas fa-wallet'></i> Pagar com BTC</button>");
+        out.println("<div class='qr' id='qrcode'></div>");
+        out.println("</aside>");
+
+        // JavaScript functions
+        out.println("<script>");
+        // JavaScript functions would go here
+        out.println("</script>");
+
+        // Footer
+        out.println("</body>");
+        out.println("</html>");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        try {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE username=? AND password=?");
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                HttpSession session = request.getSession();
+                session.setAttribute("username", username);
+                session.setAttribute("role", rs.getString("role"));
+                response.sendRedirect("/dashboard");
+            } else {
+                response.sendRedirect("/login?error=Invalid credentials");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
